@@ -1,0 +1,37 @@
+MultiDoc = sections:MultiDocSection* {
+	return sections;
+}
+
+MultiDocSection
+	= section:MultiDocSectionHeader lines:MultiDocLine* {
+		section.content = lines.join("\n");
+		return section;
+	}
+
+MultiDocSectionHeader
+	= '--- ' _ type:$( [A-Za-z][A-Za-z_-]* ) _ TERM {
+		return {
+			type: type
+		};
+	}
+
+MultiDocLine
+	= !'---' content:$(MultiDocLineChar*) TERM {
+		return content;
+	}
+
+MultiDocLineChar
+	= ![\r\n] .
+
+//
+// Helpers
+
+_
+	= [ \t]*
+
+TERM
+	= NL
+
+NL
+	= '\n'
+	/ '\r' '\n'?
