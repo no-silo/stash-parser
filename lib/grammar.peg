@@ -1,3 +1,23 @@
+Info
+	= pairs:(InfoKeyValue*) {
+		return pairs.reduce(function(memo, pair) {
+			memo[pair[0]] = pair[1];
+			return memo;
+		}, {});
+	}
+
+InfoKeyValue
+	= key:InfoKey ':' _ value:InfoValue TERM __ {
+		return [key, value];
+	}
+
+InfoKey
+	= $( [a-z]i[a-z0-9_-]i* )
+
+InfoValue
+	= InlineValue
+	/ SExp
+
 MultiDoc = sections:MultiDocSection* {
 	return sections;
 }
@@ -188,7 +208,23 @@ keyword
 	= $( [a-z_]i [a-z0-9_-]* )
 
 //
+//
+
+SExp
+	= '(' __ items:(SExpInner*) ')' _ {
+		items.type = 'sexp';
+		return items;
+	}
+
+SExpInner
+	= s:SExp __ { return s; }
+	/ v:InlineValue __ { return v; }
+
+//
 // Helpers
+
+__
+	= [ \t\r\n]*
 
 _
 	= [ \t]*
