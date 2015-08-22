@@ -39,6 +39,9 @@ MultiDocLine
 MultiDocLineChar
 	= ![\r\n] .
 
+//
+//
+
 InlineValue
 	= v:datetime _ {
 		return v;
@@ -67,10 +70,28 @@ InlineValue
 	/ v:relative_path {
 		return { type: 'relative-path', path: v };
 	}
-	/ v:keyword {
+	/ v:keyword _ {
 		return { type: 'keyword', path: v };
 	}
-	/ v:InlineArray
+	/ v:InlineArray _ { return v; }
+	/ v:String _ { return v; }
+
+String
+	= DoubleQuotedString
+
+DoubleQuotedString
+	= '"' str:(DoubleQuotedStringChar*) '"' {
+		return str.join('');
+	}
+
+DoubleQuotedStringChar
+	= "\\n"     { return "\n"; }
+	/ "\\r"     { return "\r"; }
+	/ "\\t"     { return "\t"; }
+	/ "\\'"     { return "'"; }
+	/ '\\"'     { return '"'; }
+	/ '\\\\'    { return "\\"; }
+	/ $ ( !["\\] . )
 
 InlineArray
 	= '[' _ InlineArrayInner? ']' _
