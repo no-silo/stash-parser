@@ -9,10 +9,26 @@ MultiDocSection
 	}
 
 MultiDocSectionHeader
-	= '--- ' _ type:$( [A-Za-z][A-Za-z_-]* ) _ TERM {
+	= '--- ' _ type:$( [a-z]i[a-z_-]i* ) _ args:MultiDocSectionArgs? TERM {
 		return {
-			type: type
+			type: type,
+			args: args || {}
 		};
+	}
+
+MultiDocSectionArgs
+	= head:MultiDocSectionArg tail:(',' _ MultiDocSectionArg)* {
+		var out = {};
+		out[head[0]] = head[1];
+		return tail.reduce(function(memo, arg) {
+			memo[arg[2][0]] = arg[2][1];
+			return memo;
+		}, out);
+	}
+
+MultiDocSectionArg
+	= key:$( [a-z]i[a-z_-]i* )':' _ value:InlineValue {
+		return [key, value];
 	}
 
 MultiDocLine
@@ -22,6 +38,118 @@ MultiDocLine
 
 MultiDocLineChar
 	= ![\r\n] .
+
+InlineValue
+	= v:datetime _ {
+		return v;
+	}
+	/ v:date _ {
+		return 
+	}
+	/ v:boolean _ {
+		return (v === 'yes' || v === 'true' || v === 'on')
+	}
+	/ v:number _ {
+		return parseFloat(v);
+	}
+	/ v:uuid _ {
+		return { type: 'uuid', value: v };
+	}
+	/ v:docid _ {
+		return { type: 'docid', value: v };
+	}
+	/ v:aliased_path {
+		return { type: 'aliased-path', path: v };
+	}
+	/ v:absolute_path {
+		return { type: 'absolute-path', path: v };
+	}
+	/ v:relative_path {
+		return { type: 'relative-path', path: v };
+	}
+	/ v:keyword {
+		return { type: 'keyword', path: v };
+	}
+	/ v:InlineArray
+
+InlineArray
+	= '[' _ InlineArrayInner? ']' _
+
+InlineArrayInner
+	= head:InlineValue tail:(',' _ InlineValue)* {
+		return [head].concat(tail.map(function(v) {
+			return v[2];
+		}));
+	}
+
+//
+// Atoms
+
+number
+	= float
+	/ integer
+
+float
+	= $( [0-9]+ '.' [0-9+] )
+
+integer
+	= $( [0-9]+ )
+	
+boolean
+	= $( 'yes' )
+	/ $( 'true' )
+	/ $( 'on' )
+	/ $( 'no' )
+	/ $( 'false' )
+	/ $( 'off' )
+
+datetime
+	= date datetime_separator time {
+		return 'datetime';
+	}
+
+date
+	= [0-9][0-9][0-9][0-9] '-' [0-9][0-9] '-' [0-9][0-9] {
+		return 'date';
+	}
+
+datetime_separator
+	= [ T]
+
+time
+	= [0-9][0-9] ':' [0-9][0-9] (':' [0-9][0-9])? {
+		return 'time';
+	}
+
+uuid
+	= 	'#' value:$(
+			HD HD HD HD HD HD HD HD '-'
+			HD HD HD HD '-'
+			HD HD HD HD '-'
+			HD HD HD HD '-'
+			HD HD HD HD HD HD HD HD HD HD HD HD
+		) { return value; }
+
+docid
+	= '#' value:$( [a-z-]+ ) { return value; }
+
+aliased_path
+	= '@' $( FC+ absolute_path? )
+
+absolute_path
+	= '/' path?
+
+relative_path
+	= './' path?
+
+path
+	= ( FC+ '/' )*
+
+filename
+	= $( FC+ '.' FC+ )
+
+keyword
+	= $( [a-z_]i [a-z0-9_-]* )
 
 //
 // Helpers
@@ -35,3 +163,9 @@ TERM
 NL
 	= '\n'
 	/ '\r' '\n'?
+
+HD
+	= [0-9a-f]i
+
+FC
+	= [a-z0-9_-]i

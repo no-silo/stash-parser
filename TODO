@@ -1,0 +1,9 @@
+[ ] multi doc section types
+	[x] number
+	[x] boolean
+	[ ] string
+	[x] keyword
+	[x] date/time
+	[x] docid
+	[x] uuid
+	[x] inline arrays
