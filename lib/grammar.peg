@@ -70,8 +70,11 @@ InlineValue
 	/ v:relative_path {
 		return { type: 'relative-path', path: v };
 	}
+	/ v:filename {
+		return { type: 'filename', path: v };
+	}
 	/ v:keyword _ {
-		return { type: 'keyword', path: v };
+		return v;
 	}
 	/ v:InlineArray _ { return v; }
 	/ v:String _ { return v; }
@@ -94,7 +97,9 @@ DoubleQuotedStringChar
 	/ $ ( !["\\] . )
 
 InlineArray
-	= '[' _ InlineArrayInner? ']' _
+	= '[' _ vals:InlineArrayInner? ']' _ {
+		return vals;
+	}
 
 InlineArrayInner
 	= head:InlineValue tail:(',' _ InlineValue)* {
@@ -155,16 +160,26 @@ docid
 	= '#' value:$( [a-z-]+ ) { return value; }
 
 aliased_path
-	= '@' $( FC+ absolute_path? )
+	= $( '@' FC+ absolute_path? )
 
 absolute_path
-	= '/' path?
+	= $( '/' (path_part '/')* filename )
+	/ $( '/' (path_part '/')* path_part? )
+	/ $( '/' (path_part '/')* )
 
 relative_path
-	= './' path?
+	= relative_path_1
+	/ relative_path_2
 
-path
-	= ( FC+ '/' )*
+relative_path_1
+	= $( path_part '/' (path_part '/')* filename )
+	/ $( path_part '/' (path_part '/')* path_part? )
+
+relative_path_2
+	= '.' absolute_path
+
+path_part
+	= FC+
 
 filename
 	= $( FC+ '.' FC+ )
