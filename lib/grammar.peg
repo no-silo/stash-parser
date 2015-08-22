@@ -18,8 +18,11 @@ InfoValue
 	= InlineValue
 	/ SExp
 
-MultiDoc = sections:MultiDocSection* {
-	return sections;
+MultiDoc = preamble:Info? sections:MultiDocSection* {
+	return {
+		meta: preamble || {},
+		sections: sections
+	};
 }
 
 MultiDocSection
